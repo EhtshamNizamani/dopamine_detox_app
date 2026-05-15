@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:sqflite/sqflite.dart';
 import '../../domain/entities/log_entry_entity.dart';
 import '../../domain/repositories/log_repository.dart';
 import '../datasources/log_local_datasource.dart';
@@ -43,4 +44,16 @@ class LogRepositoryImpl implements LogRepository {
       return Left(e.toString());
     }
   }
+  
+@override
+Future<Either<String, int>> getTotalLogsCount() async {
+  try {
+    final count = Sqflite.firstIntValue(
+      await dataSource.db.rawQuery('SELECT COUNT(*) FROM activity_logs')
+    ) ?? 0;
+    return Right(count);
+  } catch (e) {
+    return Left(e.toString());
+  }
+}
 }

@@ -2,6 +2,8 @@ import 'package:dopamine_detox_app/core/di/injection.dart';
 import 'package:dopamine_detox_app/features/activity_log/domain/entities/log_entry_entity.dart';
 import 'package:dopamine_detox_app/features/activity_log/presentation/screen/activity_log_screen.dart';
 import 'package:dopamine_detox_app/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:dopamine_detox_app/features/gamification/domain/entities/gamification.dart';
+import 'package:dopamine_detox_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -15,11 +17,14 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   late DashboardViewModel _viewModel;
-
+  late GamificationViewModel _gamificationVM;
   @override
   void initState() {
     super.initState();
     _viewModel = sl<DashboardViewModel>();
+      _gamificationVM = sl<GamificationViewModel>();
+  _gamificationVM.loadGamification();
+
     _viewModel.loadDashboardData();
   }
 
@@ -62,7 +67,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _DopamineScoreCard(score: viewModel.dopamineScore),
                 const SizedBox(height: 16),
                 _StreakCard(streak: viewModel.streak),
+// Inside the Column after _StreakCard
+const SizedBox(height: 16),
+Consumer<GamificationViewModel>(
+  builder: (context, gamificationVM, child) {
+    if (gamificationVM.gamification == null) {
+      return const SizedBox.shrink();
+    }
+    return _GamificationCard(gamification: gamificationVM.gamification!);
+  },
+),
                 const SizedBox(height: 16),
+                
                 _RecentLogsSection(logs: viewModel.recentLogs),
               ],
             ),
@@ -226,5 +242,56 @@ class _LogTile extends StatelessWidget {
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     return '${diff.inDays}d ago';
+  }
+}
+
+class _GamificationCard extends StatelessWidget {
+  final GamificationEntity gamification;
+  const _GamificationCard({required this.gamification});
+
+  @override
+  Widget build(BuildContext context) {
+    int currentProgress = gamification.currentLevelProgress;
+    int needed = gamification.xpForNextLevel - ((gamification.level - 1) * 100);
+    double progress = currentProgress / needed;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Level ${gamification.level}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.teal)),
+                Text('${gamification.totalXP} XP', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(value: progress, backgroundColor: Colors.grey[800], valueColor: const AlwaysStoppedAnimation(Colors.orange)),
+            const SizedBox(height: 8),
+            Text('$currentProgress / $needed XP to next level', style: const TextStyle(fontSize: 12, color: Colors.white70)),
+            const SizedBox(height: 12),
+            const Text('Badges:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 8,
+              children: [
+                if (gamification.unlockedBadges.contains('First Log')) _badgeChip('🏅 First Log'),
+                if (gamification.unlockedBadges.contains('3-Day Streak')) _badgeChip('🔥 3-Day Streak'),
+                if (gamification.unlockedBadges.contains('7-Day Streak')) _badgeChip('🏆 7-Day Streak'),
+                if (gamification.unlockedBadges.contains('Level 5')) _badgeChip('⭐ Level 5'),
+                if (gamification.unlockedBadges.isEmpty) const Text('No badges yet', style: TextStyle(color: Colors.grey)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _badgeChip(String label) {
+    return Chip(label: Text(label), backgroundColor: Colors.teal.shade800);
   }
 }

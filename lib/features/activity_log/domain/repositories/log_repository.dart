@@ -5,4 +5,6 @@ abstract class LogRepository {
   Future<Either<String, void>> addLog(LogEntryEntity log);
   Future<Either<String, List<LogEntryEntity>>> getLogsForDate(DateTime date);
   Future<Either<String, List<LogEntryEntity>>> getRecentLogs({int limit = 10});
+  Future<Either<String, int>> getTotalLogsCount(); // new
+
 }

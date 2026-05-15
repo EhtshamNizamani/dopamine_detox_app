@@ -5,8 +5,15 @@ import 'package:dopamine_detox_app/features/activity_log/domain/usecases/add_log
 import 'package:dopamine_detox_app/features/activity_log/domain/usecases/get_recent_logs.dart';
 import 'package:dopamine_detox_app/features/activity_log/domain/usecases/get_streak.dart';
 import 'package:dopamine_detox_app/features/activity_log/domain/usecases/get_today_logs.dart';
+import 'package:dopamine_detox_app/features/activity_log/domain/usecases/get_total_logs_count.dart';
 import 'package:dopamine_detox_app/features/activity_log/presentation/providers/activity_log_viewmodel.dart';
 import 'package:dopamine_detox_app/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:dopamine_detox_app/features/gamification/data/datasources/gamification_local_ds.dart';
+import 'package:dopamine_detox_app/features/gamification/data/repositories/gamification_repository_impl.dart';
+import 'package:dopamine_detox_app/features/gamification/domain/repositories/gamification_repository.dart';
+import 'package:dopamine_detox_app/features/gamification/domain/usecases/add_xp.dart';
+import 'package:dopamine_detox_app/features/gamification/domain/usecases/get_gamification.dart';
+import 'package:dopamine_detox_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:dopamine_detox_app/features/settings/data/datasources/settings_local_ds.dart';
 import 'package:dopamine_detox_app/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:dopamine_detox_app/features/settings/domain/repositories/settings_repository.dart';
@@ -53,9 +60,32 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<SettingsLocalDataSource>(
     () => SettingsLocalDataSource(sl<SharedPreferences>()),
   );
+    sl.registerLazySingleton<GamificationLocalDataSource>(
+    () => GamificationLocalDataSource(sl<SharedPreferences>()),
+  );
+
   sl.registerLazySingleton<SettingsRepository>(
     () => SettingsRepositoryImpl(sl<SettingsLocalDataSource>(), sl<Database>()),
   );
+
+  // Gamification
+  sl.registerLazySingleton<GamificationRepository>(
+    () => GamificationRepositoryImpl(sl<GamificationLocalDataSource>()),
+  );
+  sl.registerLazySingleton<GetGamificationUseCase>(
+    () => GetGamificationUseCase(sl<GamificationRepository>()),
+  );
+  sl.registerLazySingleton<AddXPUseCase>(
+    () => AddXPUseCase(sl<GamificationRepository>()),
+  );
+  sl.registerFactory<GamificationViewModel>(
+    () => GamificationViewModel(
+      getGamification: sl<GetGamificationUseCase>(),
+      addXP: sl<AddXPUseCase>(),
+    ),
+  );
+
+
 
   // Use Cases
   sl.registerLazySingleton<SignInAnonymously>(
@@ -71,6 +101,9 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<GetSettings>(() => GetSettings(sl<SettingsRepository>()));
   sl.registerLazySingleton<UpdateNotifications>(() => UpdateNotifications(sl<SettingsRepository>()));
   sl.registerLazySingleton<ResetAllData>(() => ResetAllData(sl<SettingsRepository>()));
+sl.registerLazySingleton<GetTotalLogsCountUseCase>(
+  () => GetTotalLogsCountUseCase(sl<LogRepository>()),
+);
 
   
   // ViewModels
@@ -83,7 +116,7 @@ Future<void> initDependencies() async {
   sl.registerFactory<OnboardingViewModel>(
     () => OnboardingViewModel(sl<SharedPreferences>()),
   );
-    sl.registerFactory<ActivityLogViewModel>(() => ActivityLogViewModel(addLogUseCase: sl<AddLogUseCase>()));
+    sl.registerFactory<ActivityLogViewModel>(() => ActivityLogViewModel(addLogUseCase: sl<AddLogUseCase>(), addXPUseCase: sl<AddXPUseCase>(), getTotalLogsCount: sl<GetTotalLogsCountUseCase>()  ));
   sl.registerFactory<DashboardViewModel>(() => DashboardViewModel(
     getTodayLogs: sl<GetTodayLogsUseCase>(),
     getRecentLogs: sl<GetRecentLogsUseCase>(),

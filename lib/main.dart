@@ -2,6 +2,7 @@ import 'package:dopamine_detox_app/core/router/app_router.dart';
 import 'package:dopamine_detox_app/features/activity_log/presentation/providers/activity_log_viewmodel.dart';
 import 'package:dopamine_detox_app/features/auth/presentation/viewmodel/auth_viewmodel.dart';
 import 'package:dopamine_detox_app/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:dopamine_detox_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:dopamine_detox_app/features/onboarding/presentation/providers/onboarding_provider.dart';
 import 'package:dopamine_detox_app/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -36,11 +37,11 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => sl<AuthViewModel>()),
-        // Add other providers here (e.g. OnboardingViewModel)
         ChangeNotifierProvider(create: (_) => sl<OnboardingViewModel>()),
         ChangeNotifierProvider(create:  (_) => sl<DashboardViewModel>()),
         ChangeNotifierProvider(create:  (_) => sl<ActivityLogViewModel>()),
         ChangeNotifierProvider(create:  (_) => sl<SettingsViewModel>()),
+        ChangeNotifierProvider(create:  (_) => sl<GamificationViewModel>()),
       ],
       child: MaterialApp.router(
         title: 'Dopamine Detox',
