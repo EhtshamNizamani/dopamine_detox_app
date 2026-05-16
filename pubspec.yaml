@@ -50,6 +50,7 @@ dependencies:
   flutter_native_splash: ^2.4.7
   flutter_local_notifications: ^21.0.0
   dartz: ^0.10.1
+  url_launcher: ^6.3.2
 
 
 dev_dependencies:

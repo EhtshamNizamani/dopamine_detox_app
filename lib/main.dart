@@ -36,12 +36,12 @@ class MyApp extends StatelessWidget {
     final appRouter = AppRouter.router; // Assume this is defined in router.dart
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => sl<AuthViewModel>()),
-        ChangeNotifierProvider(create: (_) => sl<OnboardingViewModel>()),
-        ChangeNotifierProvider(create:  (_) => sl<DashboardViewModel>()),
-        ChangeNotifierProvider(create:  (_) => sl<ActivityLogViewModel>()),
-        ChangeNotifierProvider(create:  (_) => sl<SettingsViewModel>()),
-        ChangeNotifierProvider(create:  (_) => sl<GamificationViewModel>()),
+     ChangeNotifierProvider.value(value: sl<AuthViewModel>()),
+      ChangeNotifierProvider.value(value: sl<OnboardingViewModel>()),
+      ChangeNotifierProvider.value(value: sl<ActivityLogViewModel>()),
+      ChangeNotifierProvider.value(value: sl<DashboardViewModel>()),
+      ChangeNotifierProvider.value(value: sl<GamificationViewModel>()),
+      ChangeNotifierProvider.value(value: sl<SettingsViewModel>()),
       ],
       child: MaterialApp.router(
         title: 'Dopamine Detox',

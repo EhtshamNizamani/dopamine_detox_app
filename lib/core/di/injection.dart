@@ -12,7 +12,10 @@ import 'package:dopamine_detox_app/features/gamification/data/datasources/gamifi
 import 'package:dopamine_detox_app/features/gamification/data/repositories/gamification_repository_impl.dart';
 import 'package:dopamine_detox_app/features/gamification/domain/repositories/gamification_repository.dart';
 import 'package:dopamine_detox_app/features/gamification/domain/usecases/add_xp.dart';
+import 'package:dopamine_detox_app/features/gamification/domain/usecases/check_and_update_streak.dart';
+import 'package:dopamine_detox_app/features/gamification/domain/usecases/check_daily_open.dart';
 import 'package:dopamine_detox_app/features/gamification/domain/usecases/get_gamification.dart';
+import 'package:dopamine_detox_app/features/gamification/domain/usecases/unlock_badges.dart';
 import 'package:dopamine_detox_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:dopamine_detox_app/features/settings/data/datasources/settings_local_ds.dart';
 import 'package:dopamine_detox_app/features/settings/data/repositories/settings_repository_impl.dart';
@@ -24,7 +27,6 @@ import 'package:dopamine_detox_app/features/settings/presentation/viewmodels/set
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sqflite/sqflite.dart';
 
 import '../database/database_helper.dart';
 import '../../features/auth/data/datasources/auth_local_datasource.dart';
@@ -40,96 +42,84 @@ final GetIt sl = GetIt.instance;
 Future<void> initDependencies() async {
   // ========== External ==========
   final sharedPrefs = await SharedPreferences.getInstance();
-  sl.registerLazySingleton<SharedPreferences>(() => sharedPrefs);
-  
+  sl.registerLazySingleton(() => sharedPrefs);
+
   final database = await DatabaseHelper.init();
-  sl.registerLazySingleton<Database>(() => database);
-  
+  sl.registerLazySingleton(() => database);
+
   // ========== Firebase ==========
-  sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
-  
-  // ========== Auth Feature ==========
-  sl.registerLazySingleton<AuthLocalDataSource>(
-    () => AuthLocalDataSource(sl<FirebaseAuth>()),
-  );
-  sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(sl<AuthLocalDataSource>()),
-  );
-    sl.registerLazySingleton<LogLocalDataSource>(() => LogLocalDataSource(sl<Database>()));
-  sl.registerLazySingleton<LogRepository>(() => LogRepositoryImpl(sl<LogLocalDataSource>()));
-  sl.registerLazySingleton<SettingsLocalDataSource>(
-    () => SettingsLocalDataSource(sl<SharedPreferences>()),
-  );
-    sl.registerLazySingleton<GamificationLocalDataSource>(
-    () => GamificationLocalDataSource(sl<SharedPreferences>()),
-  );
+  sl.registerLazySingleton(() => FirebaseAuth.instance);
 
-  sl.registerLazySingleton<SettingsRepository>(
-    () => SettingsRepositoryImpl(sl<SettingsLocalDataSource>(), sl<Database>()),
-  );
+  // ========== Data Sources ==========
+  sl.registerLazySingleton(() => AuthLocalDataSource(sl()));
+  sl.registerLazySingleton(() => LogLocalDataSource(sl()));
+  sl.registerLazySingleton(() => SettingsLocalDataSource(sl()));
+  sl.registerLazySingleton(() => GamificationLocalDataSource(sl()));
 
-  // Gamification
-  sl.registerLazySingleton<GamificationRepository>(
-    () => GamificationRepositoryImpl(sl<GamificationLocalDataSource>()),
-  );
-  sl.registerLazySingleton<GetGamificationUseCase>(
-    () => GetGamificationUseCase(sl<GamificationRepository>()),
-  );
-  sl.registerLazySingleton<AddXPUseCase>(
-    () => AddXPUseCase(sl<GamificationRepository>()),
-  );
-  sl.registerFactory<GamificationViewModel>(
-    () => GamificationViewModel(
-      getGamification: sl<GetGamificationUseCase>(),
-      addXP: sl<AddXPUseCase>(),
-    ),
-  );
+  // ========== Repositories ==========
+  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
+  sl.registerLazySingleton<LogRepository>(() => LogRepositoryImpl(sl()));
+  sl.registerLazySingleton<SettingsRepository>(() => SettingsRepositoryImpl(sl(), sl()));
+  sl.registerLazySingleton<GamificationRepository>(() => GamificationRepositoryImpl(sl()));
 
+  // ========== Auth Use Cases ==========
+  sl.registerLazySingleton(() => SignInAnonymously(sl()));
+  sl.registerLazySingleton(() => CheckAuthStatus(sl()));
 
+  // ========== Activity Log Use Cases ==========
+  sl.registerLazySingleton(() => AddLogUseCase(sl()));
+  sl.registerLazySingleton(() => GetTodayLogsUseCase(sl()));
+  sl.registerLazySingleton(() => GetRecentLogsUseCase(sl()));
+  sl.registerLazySingleton(() => GetStreakUseCase(sl()));
+  sl.registerLazySingleton(() => GetTotalLogsCountUseCase(sl()));
 
-  // Use Cases
-  sl.registerLazySingleton<SignInAnonymously>(
-    () => SignInAnonymously(sl<AuthRepository>()),
-  );
-  sl.registerLazySingleton<CheckAuthStatus>(
-    () => CheckAuthStatus(sl<AuthRepository>()),
-  );
-    sl.registerLazySingleton<AddLogUseCase>(() => AddLogUseCase(sl<LogRepository>()));
-  sl.registerLazySingleton<GetTodayLogsUseCase>(() => GetTodayLogsUseCase(sl<LogRepository>()));
-  sl.registerLazySingleton<GetRecentLogsUseCase>(() => GetRecentLogsUseCase(sl<LogRepository>()));
-  sl.registerLazySingleton<GetStreakUseCase>(() => GetStreakUseCase(sl<LogRepository>()));
-  sl.registerLazySingleton<GetSettings>(() => GetSettings(sl<SettingsRepository>()));
-  sl.registerLazySingleton<UpdateNotifications>(() => UpdateNotifications(sl<SettingsRepository>()));
-  sl.registerLazySingleton<ResetAllData>(() => ResetAllData(sl<SettingsRepository>()));
-sl.registerLazySingleton<GetTotalLogsCountUseCase>(
-  () => GetTotalLogsCountUseCase(sl<LogRepository>()),
-);
+  // ========== Gamification Use Cases ==========
+  sl.registerLazySingleton(() => GetGamificationUseCase(sl()));
+  sl.registerLazySingleton(() => AddXPUseCase(sl()));
+  sl.registerLazySingleton(() => CheckAndUpdateStreakUseCase(sl()));
+  sl.registerLazySingleton(() => UnlockBadgesUseCase(sl()));
+  sl.registerLazySingleton(() => CheckDailyOpenUseCase(sl()));
 
-  
-  // ViewModels
-  sl.registerFactory<AuthViewModel>(
-    () => AuthViewModel(
-      signInAnonymously: sl<SignInAnonymously>(),
-      checkAuthStatus: sl<CheckAuthStatus>(),
-    ),
-  );
-  sl.registerFactory<OnboardingViewModel>(
-    () => OnboardingViewModel(sl<SharedPreferences>()),
-  );
-    sl.registerFactory<ActivityLogViewModel>(() => ActivityLogViewModel(addLogUseCase: sl<AddLogUseCase>(), addXPUseCase: sl<AddXPUseCase>(), getTotalLogsCount: sl<GetTotalLogsCountUseCase>()  ));
-  sl.registerFactory<DashboardViewModel>(() => DashboardViewModel(
-    getTodayLogs: sl<GetTodayLogsUseCase>(),
-    getRecentLogs: sl<GetRecentLogsUseCase>(),
-    getStreak: sl<GetStreakUseCase>(),
+  // ========== Settings Use Cases ==========
+  sl.registerLazySingleton(() => GetSettings(sl()));
+  sl.registerLazySingleton(() => UpdateNotifications(sl()));
+  sl.registerLazySingleton(() => ResetAllData(sl()));
+
+  // ========== ViewModels (ALL SINGLETON) ==========
+  sl.registerLazySingleton(() => AuthViewModel(
+    signInAnonymously: sl(),
+    checkAuthStatus: sl(),
   ));
 
-    sl.registerFactory<SettingsViewModel>(
-    () => SettingsViewModel(
-      getSettings: sl<GetSettings>(),
-      updateNotifications: sl<UpdateNotifications>(),
-      resetAllData: sl<ResetAllData>(),
-    ),
-  );
+  sl.registerLazySingleton(() => OnboardingViewModel());
 
+  sl.registerLazySingleton(() => ActivityLogViewModel(
+    addLogUseCase: sl(),
+    getTotalLogsCount: sl(),
+    unlockBadges: sl(),
+    getTodayLogs: sl(), // NEW
 
+  ));
+
+  sl.registerLazySingleton(() => DashboardViewModel(
+    getTodayLogs: sl(),
+    getRecentLogs: sl(),
+    getStreak: sl(),
+    getGamification: sl(),
+    checkStreak: sl(),
+    unlockBadges: sl(),
+    getTotalLogsCount: sl(),
+  ));
+
+  sl.registerLazySingleton(() => GamificationViewModel(
+    getGamification: sl(),
+    addXP: sl(),
+    checkDailyOpen: sl(),
+  ));
+
+  sl.registerLazySingleton(() => SettingsViewModel(
+    getSettings: sl(),
+    updateNotifications: sl(),
+    resetAllData: sl(),
+  ));
 }
