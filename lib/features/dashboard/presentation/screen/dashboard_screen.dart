@@ -1,5 +1,6 @@
 import 'package:dopamine_detox_app/core/constants/app_constants.dart';
 import 'package:dopamine_detox_app/core/di/injection.dart';
+import 'package:dopamine_detox_app/core/widgets/how_it_works_bottom_sheet.dart';
 import 'package:dopamine_detox_app/features/activity_log/domain/entities/log_entry_entity.dart';
 import 'package:dopamine_detox_app/features/activity_log/presentation/screen/activity_log_screen.dart';
 import 'package:dopamine_detox_app/features/dashboard/presentation/providers/dashboard_provider.dart';
@@ -37,12 +38,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _gamificationVM.loadGamification();
   }
 
-  void _onDashboardUpdate() {
-    if (_dashboardVM.newlyUnlockedBadges.isNotEmpty && mounted) {
-      _showBadgeUnlocked(_dashboardVM.newlyUnlockedBadges);
-      _dashboardVM.clearNewBadges();
-    }
+void _onDashboardUpdate() {
+  // 1. Badge toast (already hai)
+  if (_dashboardVM.newlyUnlockedBadges.isNotEmpty && mounted) {
+    _showBadgeUnlocked(_dashboardVM.newlyUnlockedBadges);
+    _dashboardVM.clearNewBadges();
   }
+
+  // 🆕 2. XP Toast — jab streak update se XP mile
+  if (_dashboardVM.lastXPAwarded > 0 && mounted) {
+    _showXPAwarded(_dashboardVM.lastXPAwarded);
+    _dashboardVM.clearLastXP();
+  }
+}
+
+// 🆕 YE METHOD ADD KARO (baqi _showBadgeUnlocked ke saath)
+void _showXPAwarded(int xp) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star_rounded, color: Colors.amber),
+          const SizedBox(width: 8),
+          Text(
+            'Good Day! +$xp XP',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.teal.shade800,
+      duration: const Duration(seconds: 2),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
+  );
+}
 
   void _showBadgeUnlocked(List<String> badges) {
     final names = badges
@@ -65,12 +96,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await _gamificationVM.loadGamification();
   }
 
-  Future<void> _onAddLog() async {
-    final result = await context.push<bool>('/activity-log');
-    if (result == true) {
-      await _onRefresh(); // Donon VMs refresh honge
-    }
-  }
 
   @override
   void dispose() {
@@ -179,10 +204,28 @@ class _ScoreCard extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const Text(
-              'Dopamine Score',
-              style: TextStyle(fontSize: 16, color: Colors.white70),
-            ),
+                      Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Spacer(),
+
+              const Text(
+                'Dopamine Score',
+                style: TextStyle(fontSize: 16, color: Colors.white70),
+              ),
+              const SizedBox(width: 8),
+              Spacer(),
+              GestureDetector(
+                onTap: () => HowItWorksBottomSheet.show(context),
+                child: Icon(
+                  Icons.help_outline,
+                  size: 24,
+                  color: Colors.teal.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+
             const SizedBox(height: 8),
             Text(
               '$score',

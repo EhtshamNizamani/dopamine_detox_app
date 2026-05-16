@@ -1,5 +1,6 @@
 import 'package:dopamine_detox_app/core/constants/app_constants.dart';
 import 'package:dopamine_detox_app/core/di/injection.dart';
+import 'package:dopamine_detox_app/core/widgets/how_it_works_bottom_sheet.dart';
 import 'package:dopamine_detox_app/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -28,7 +29,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _launchPrivacyPolicy() async {
-    final uri = Uri.parse('https://ehtshamnizamani.github.io/dopamine-detox-privacy/');
+    final uri = Uri.parse(
+      'https://ehtshamnizamani.github.io/dopamine-detox-privacy/',
+    );
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
@@ -65,13 +68,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             physics: const BouncingScrollPhysics(),
             slivers: [
               // ── Header with Back Button ──
-              SliverToBoxAdapter(
-                child: _buildHeader(context),
-              ),
+              SliverToBoxAdapter(child: _buildHeader(context)),
 
               // ── Settings Content ──
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // Section: General
@@ -107,7 +111,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     //     ),
                     //   ],
                     // ),
-
                     const SizedBox(height: 24),
 
                     // Section: Data & Privacy
@@ -139,9 +142,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 24),
 
                     // Section: About
-                    const _SectionTitle(title: 'About', icon: Icons.info_outline),
+                    const _SectionTitle(
+                      title: 'About',
+                      icon: Icons.info_outline,
+                    ),
                     _SettingsCard(
                       children: [
+                        _SettingsTile(
+                          icon: Icons.help_outline_rounded,
+                          iconColor: Colors.teal,
+                          title: 'How It Works',
+                          subtitle: 'Rules, scoring, streaks & rewards',
+                          onTap: () => HowItWorksBottomSheet.show(context),
+                        ),
+
                         _SettingsTile(
                           icon: Icons.rocket_launch_outlined,
                           iconColor: Colors.amber,
@@ -209,14 +223,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             tooltip: 'Back',
           ),
           const SizedBox(width: 8),
-           Text(
-                  'Settings',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+          Text(
+            'Settings',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
         ],
       ),
     );
@@ -247,10 +261,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         title: const Text(
           'Reset Everything?',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         content: const Column(
           mainAxisSize: MainAxisSize.min,
@@ -262,7 +273,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SizedBox(height: 12),
             _ResetItem(icon: Icons.history, text: 'All activity logs'),
             _ResetItem(icon: Icons.emoji_events, text: 'XP, levels & badges'),
-            _ResetItem(icon: Icons.local_fire_department, text: 'Current streak'),
+            _ResetItem(
+              icon: Icons.local_fire_department,
+              text: 'Current streak',
+            ),
             _ResetItem(icon: Icons.settings, text: 'App preferences'),
             SizedBox(height: 16),
             Text(
@@ -359,14 +373,9 @@ class _SettingsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF1A2F3A).withOpacity(0.6),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.06),
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: children,
-      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: children),
     );
   }
 }
@@ -415,12 +424,10 @@ class _SettingsTile extends StatelessWidget {
       ),
       subtitle: Text(
         subtitle,
-        style: TextStyle(
-          color: Colors.white.withOpacity(0.5),
-          fontSize: 13,
-        ),
+        style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13),
       ),
-      trailing: trailing ??
+      trailing:
+          trailing ??
           (showArrow
               ? Icon(
                   Icons.chevron_right_rounded,
@@ -448,10 +455,7 @@ class _ResetItem extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             text,
-            style: const TextStyle(
-              color: Colors.white60,
-              fontSize: 13,
-            ),
+            style: const TextStyle(color: Colors.white60, fontSize: 13),
           ),
         ],
       ),

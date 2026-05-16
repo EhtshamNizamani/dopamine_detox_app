@@ -1,5 +1,3 @@
-import 'package:dopamine_detox_app/core/constants/app_constants.dart';
-import 'package:dopamine_detox_app/core/di/injection.dart';
 import 'package:dopamine_detox_app/features/onboarding/presentation/providers/onboarding_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -20,7 +18,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   late final AnimationController _pulseController;
   late final AnimationController _rocketController;
-  late final Animation<Offset> _rocketAnimation;
 
   bool _isRocketFlying = false;
 
@@ -322,7 +319,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         const SizedBox(height: 8),
         const Text(
           'Tap a trigger to see the score drop',
-          style: TextStyle(fontSize: 11, color: Colors.white38),
+          style: TextStyle(fontSize: 11, color: Colors.white54),
         ),
       ],
     );
