@@ -30,7 +30,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // Badge unlock listener
     _dashboardVM.addListener(_onDashboardUpdate);
 
-    _loadAllData();
+WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      _loadAllData();
+    }
+  });
   }
 
   void _loadAllData() {
@@ -169,8 +173,8 @@ floatingActionButton: Consumer<DashboardViewModel>(
         print(  'Returned from log screen with result: $result');
         // Agar log add hua to donon VMs refresh karo
         if (result == true) {
-          _viewModel.loadDashboardData();
-          _gamificationVM.loadGamification();
+         await _viewModel.loadDashboardData();
+        await  _gamificationVM.loadGamification();
         }
       },
       backgroundColor: Colors.teal,

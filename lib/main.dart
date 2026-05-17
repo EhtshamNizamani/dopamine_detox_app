@@ -19,21 +19,16 @@ void main() async {
   );
   await initDependencies();
   
-  // Register auth dependencies (simplified - add to injection.dart later)
-  // For now, create manually in main.
-  
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
   
-  // TODO: create AuthViewModel using sl.get() after registering in initDependencies
-  // For brevity, I'll show structure:
   
   @override
   Widget build(BuildContext context) {
-    final appRouter = AppRouter.router; // Assume this is defined in router.dart
+    final appRouter = AppRouter.router; 
     return MultiProvider(
       providers: [
      ChangeNotifierProvider.value(value: sl<AuthViewModel>()),
@@ -44,6 +39,7 @@ class MyApp extends StatelessWidget {
       ChangeNotifierProvider.value(value: sl<SettingsViewModel>()),
       ],
       child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
         title: 'Dopamine Detox',
         themeMode: ThemeMode.dark,
         darkTheme: AppTheme.darkTheme,
