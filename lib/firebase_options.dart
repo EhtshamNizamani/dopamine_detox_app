@@ -50,21 +50,19 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBBqzlwok1sTkFzgW24h9Jw0B90cnT2V_Y',
-    appId: '1:105427420864:android:b986918e5fcb03f6d18f25',
-    messagingSenderId: '105427420864',
-    projectId: 'blocpractice-c968b',
-    databaseURL: 'https://blocpractice-c968b-default-rtdb.firebaseio.com',
-    storageBucket: 'blocpractice-c968b.firebasestorage.app',
+    apiKey: 'AIzaSyCxGTUxRvShh9S73AHusz9QEeDBvPaXSyY',
+    appId: '1:191637719023:android:e84bbd48c951010ba7981a',
+    messagingSenderId: '191637719023',
+    projectId: 'dopamine-detox-app-2026',
+    storageBucket: 'dopamine-detox-app-2026.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyATmxnaDnlsqq4KIihLc82loACKBke-Bys',
-    appId: '1:105427420864:ios:b6b26b90b559a5f2d18f25',
-    messagingSenderId: '105427420864',
-    projectId: 'blocpractice-c968b',
-    databaseURL: 'https://blocpractice-c968b-default-rtdb.firebaseio.com',
-    storageBucket: 'blocpractice-c968b.firebasestorage.app',
+    apiKey: 'AIzaSyCE5R1qAhAyyA5in9aoPs777yKQRNH39AA',
+    appId: '1:191637719023:ios:14ec7004d34c9cfea7981a',
+    messagingSenderId: '191637719023',
+    projectId: 'dopamine-detox-app-2026',
+    storageBucket: 'dopamine-detox-app-2026.firebasestorage.app',
     iosBundleId: 'com.example.dopamineDetoxApp',
   );
 }

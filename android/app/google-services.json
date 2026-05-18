@@ -1,79 +1,21 @@
 {
   "project_info": {
-    "project_number": "105427420864",
-    "firebase_url": "https://blocpractice-c968b-default-rtdb.firebaseio.com",
-    "project_id": "blocpractice-c968b",
-    "storage_bucket": "blocpractice-c968b.firebasestorage.app"
+    "project_number": "191637719023",
+    "project_id": "dopamine-detox-app-2026",
+    "storage_bucket": "dopamine-detox-app-2026.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:105427420864:android:333702aa93979d5ad18f25",
+        "mobilesdk_app_id": "1:191637719023:android:e84bbd48c951010ba7981a",
         "android_client_info": {
-          "package_name": "com.example.bloc_practice"
+          "package_name": "com.ehtshamnizamani.dopaminedetox"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBBqzlwok1sTkFzgW24h9Jw0B90cnT2V_Y"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:105427420864:android:b986918e5fcb03f6d18f25",
-        "android_client_info": {
-          "package_name": "com.example.dopamine_detox_app"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBBqzlwok1sTkFzgW24h9Jw0B90cnT2V_Y"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:105427420864:android:890839f3d2fb28bcd18f25",
-        "android_client_info": {
-          "package_name": "com.example.firebase_notification"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBBqzlwok1sTkFzgW24h9Jw0B90cnT2V_Y"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:105427420864:android:c8437fafc0fc2408d18f25",
-        "android_client_info": {
-          "package_name": "com.example.product_admin_app"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBBqzlwok1sTkFzgW24h9Jw0B90cnT2V_Y"
+          "current_key": "AIzaSyCxGTUxRvShh9S73AHusz9QEeDBvPaXSyY"
         }
       ],
       "services": {
