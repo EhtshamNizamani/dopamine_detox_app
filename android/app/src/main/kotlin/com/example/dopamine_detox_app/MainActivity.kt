@@ -1,4 +1,4 @@
-package com.example.dopamine_detox_app
+package com.ehtshamnizamani.dopaminedetox
 
 import io.flutter.embedding.android.FlutterActivity
 

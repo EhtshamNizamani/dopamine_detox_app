@@ -463,9 +463,9 @@ class _EmptyLogsCard extends StatelessWidget {
           children: [
             Icon(Icons.info_outline, color: Colors.grey[600]),
             const SizedBox(width: 8),
-            const Text(
-              'No logs yet. Tap "Log Trigger" to start.',
-              style: TextStyle(color: Colors.grey),
+             Text(
+              'No logs yet.',
+              style: TextStyle(color: Colors.grey, fontSize: 12 ),
             ),
           ],
         ),
