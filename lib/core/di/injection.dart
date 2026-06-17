@@ -59,8 +59,12 @@ Future<void> initDependencies() async {
   // ========== Repositories ==========
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
   sl.registerLazySingleton<LogRepository>(() => LogRepositoryImpl(sl()));
-  sl.registerLazySingleton<SettingsRepository>(() => SettingsRepositoryImpl(sl(), sl()));
-  sl.registerLazySingleton<GamificationRepository>(() => GamificationRepositoryImpl(sl()));
+  sl.registerLazySingleton<SettingsRepository>(
+    () => SettingsRepositoryImpl(sl(), sl()),
+  );
+  sl.registerLazySingleton<GamificationRepository>(
+    () => GamificationRepositoryImpl(sl()),
+  );
 
   // ========== Auth Use Cases ==========
   sl.registerLazySingleton(() => SignInAnonymously(sl()));
@@ -76,7 +80,7 @@ Future<void> initDependencies() async {
   // ========== Gamification Use Cases ==========
   sl.registerLazySingleton(() => GetGamificationUseCase(sl()));
   sl.registerLazySingleton(() => AddXPUseCase(sl()));
-  sl.registerLazySingleton(() => CheckAndUpdateStreakUseCase(sl()));
+  sl.registerLazySingleton(() => CheckAndUpdateStreakUseCase(sl(), sl()));
   sl.registerLazySingleton(() => UnlockBadgesUseCase(sl()));
   sl.registerLazySingleton(() => CheckDailyOpenUseCase(sl()));
 
@@ -86,40 +90,41 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => ResetAllData(sl()));
 
   // ========== ViewModels (ALL SINGLETON) ==========
-  sl.registerLazySingleton(() => AuthViewModel(
-    signInAnonymously: sl(),
-    checkAuthStatus: sl(),
-  ));
+  sl.registerLazySingleton(
+    () => AuthViewModel(signInAnonymously: sl(), checkAuthStatus: sl()),
+  );
 
   sl.registerLazySingleton(() => OnboardingViewModel());
 
-  sl.registerLazySingleton(() => ActivityLogViewModel(
-    addLogUseCase: sl(),
-    getTotalLogsCount: sl(),
-    unlockBadges: sl(),
-    getTodayLogs: sl(), // NEW
+  sl.registerLazySingleton(
+    () => ActivityLogViewModel(addLogUseCase: sl(), getTodayLogs: sl()),
+  );
 
-  ));
+  sl.registerLazySingleton(
+    () => DashboardViewModel(
+      getTodayLogs: sl(),
+      getRecentLogs: sl(),
+      getStreak: sl(),
+      getGamification: sl(),
+      checkStreak: sl(),
+      unlockBadges: sl(),
+      getTotalLogsCount: sl(),
+    ),
+  );
 
-  sl.registerLazySingleton(() => DashboardViewModel(
-    getTodayLogs: sl(),
-    getRecentLogs: sl(),
-    getStreak: sl(),
-    getGamification: sl(),
-    checkStreak: sl(),
-    unlockBadges: sl(),
-    getTotalLogsCount: sl(),
-  ));
+  sl.registerLazySingleton(
+    () => GamificationViewModel(
+      getGamification: sl(),
+      addXP: sl(),
+      checkDailyOpen: sl(),
+    ),
+  );
 
-  sl.registerLazySingleton(() => GamificationViewModel(
-    getGamification: sl(),
-    addXP: sl(),
-    checkDailyOpen: sl(),
-  ));
-
-  sl.registerLazySingleton(() => SettingsViewModel(
-    getSettings: sl(),
-    updateNotifications: sl(),
-    resetAllData: sl(),
-  ));
+  sl.registerLazySingleton(
+    () => SettingsViewModel(
+      getSettings: sl(),
+      updateNotifications: sl(),
+      resetAllData: sl(),
+    ),
+  );
 }

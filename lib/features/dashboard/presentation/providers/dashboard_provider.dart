@@ -9,7 +9,6 @@ import 'package:dopamine_detox_app/features/gamification/domain/entities/gamific
 import 'package:dopamine_detox_app/features/gamification/domain/usecases/check_and_update_streak.dart';
 import 'package:dopamine_detox_app/features/gamification/domain/usecases/get_gamification.dart';
 import 'package:dopamine_detox_app/features/gamification/domain/usecases/unlock_badges.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class DashboardViewModel extends ChangeNotifier {
@@ -55,21 +54,19 @@ Future<void> loadDashboardData() async {
   _isLoading = true;
   _error = null;
   _newlyUnlockedBadges = [];
-  _lastXPAwarded = 0;  // Reset har load pe
+  _lastXPAwarded = 0;
   notifyListeners();
 
   try {
-    print('DashboardViewModel: Starting to load dashboard data...');
-
-    // 1. Fetch today's logs
+    // 1. Fetch today's live logs
     final todayResult = await getTodayLogs();
-    todayResult.fold((error) => _error = error, (logs) {
-      _todayLogs = logs;
-      _dopamineScore = CalculateScore.calculate(logs);
-      print(' DashboardViewModel: Today logs loaded. Dopamine score: $_dopamineScore');
-      print(_todayLogs.map((log) => ' - ${log.activityName} (Intensity: ${log.intensity})').join('\n'));
-    });
-    print('DashboardViewModel: Today logs loaded. #');
+    todayResult.fold(
+      (error) => _error = error,
+      (logs) {
+        _todayLogs = logs;
+        _dopamineScore = CalculateScore.calculate(logs);
+      },
+    );
 
     // 2. Fetch recent logs
     final recentResult = await getRecentLogs(limit: 10);
@@ -77,38 +74,37 @@ Future<void> loadDashboardData() async {
       (error) => _error = _error ?? error,
       (logs) => _recentLogs = logs,
     );
-    print('DashboardViewModel: Recent logs loaded.');
 
-    // 3. Calculate streak from logs (score >= 80)
-    final streakResult = await getStreak();
-    streakResult.fold(
-      (error) => _error = _error ?? error,
-      (streak) => _streak = streak,
-    );
-    print('DashboardViewModel: Streak calculated: $_streak days.');
+    // 3. Finalize previous completed day.
+    // Do not process today for streak.
+    int finalizedDayScoreForBadges = 0;
 
-    // 4. Award daily XP (idempotent) + Save XP amount
-    final streakUpdateResult = await checkStreak(_todayLogs);
-    streakUpdateResult.fold(
-      (error) => debugPrint('Streak XP error: $error'),
-      (result) {
-        _lastXPAwarded = result.xpAwarded;  // ← XP save karo (SIRF EK BAAR)
-        if (result.xpAwarded > 0) {
-          debugPrint('Daily XP awarded: ${result.xpAwarded}');
+    final streakUpdateResult = await checkStreak();
+    await streakUpdateResult.fold(
+      (error) async {
+        debugPrint('Streak XP error: $error');
+      },
+      (result) async {
+        _streak = result.newStreak;
+        _lastXPAwarded = result.xpAwarded;
+
+        if (result.wasPerfectDay) {
+          finalizedDayScoreForBadges = AppConstants.maxDopamineScore;
         }
       },
     );
-    print('DashboardViewModel: Streak XP updated. Last XP: $_lastXPAwarded');
 
-    // 5. Load gamification data
+    // 4. Load gamification after streak/XP update
     final gamificationResult = await getGamification();
     gamificationResult.fold(
       (error) => _error = _error ?? error,
-      (data) => _gamification = data,
+      (data) {
+        _gamification = data;
+        _streak = data.currentStreak;
+      },
     );
-    print('DashboardViewModel: Gamification data loaded. Level: ${_gamification?.level}, XP: ${_gamification}');
 
-    // 6. Check and unlock badges
+    // 5. Check badges from real updated gamification state
     if (_gamification != null) {
       final totalCountResult = await getTotalLogsCount();
       final totalCount = totalCountResult.fold((l) => 0, (r) => r);
@@ -116,20 +112,17 @@ Future<void> loadDashboardData() async {
       final badgeResult = await unlockBadges(
         currentStreak: _streak,
         currentLevel: _gamification!.level,
-        todayScore: _dopamineScore,
+        todayScore: finalizedDayScoreForBadges,
         totalLogsCount: totalCount,
       );
 
-      print('DashboardViewModel: Checking for new badges...');
-      badgeResult.fold((error) => debugPrint('Badge unlock error: $error'), (newBadges) {
-        _newlyUnlockedBadges = newBadges;
-        if (newBadges.isNotEmpty) {
-          debugPrint('Dashboard: New badges unlocked: $newBadges');
-        }
-      });
+      badgeResult.fold(
+        (error) => debugPrint('Badge unlock error: $error'),
+        (newBadges) {
+          _newlyUnlockedBadges = newBadges;
+        },
+      );
     }
-
-    print('DashboardViewModel: All data loaded.');
   } catch (e, stackTrace) {
     _error = 'Unexpected error: $e';
     debugPrint('Dashboard load error: $e');
@@ -137,10 +130,8 @@ Future<void> loadDashboardData() async {
   } finally {
     _isLoading = false;
     notifyListeners();
-    print('DashboardViewModel: Loading finished.');
   }
 }
-
   void clearNewBadges() {
     _newlyUnlockedBadges = [];
     notifyListeners();

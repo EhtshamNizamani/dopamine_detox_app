@@ -2,30 +2,25 @@ import 'package:dopamine_detox_app/features/activity_log/domain/entities/log_ent
 import 'calculate_score.dart';
 
 class CalculateStreak {
-  /// Calculate streak: consecutive days (from today backwards) with score >= 80
-  /// Stops at the earliest date that has ANY log (usse pehle count nahi hoga)
+  /// Legacy helper.
+  ///
+  /// Important:
+  /// This only counts dates that actually exist in dailyLogs.
+  /// Missing dates will break the streak instead of becoming fake perfect days.
   static int calculate(Map<DateTime, List<LogEntryEntity>> dailyLogs) {
     if (dailyLogs.isEmpty) return 0;
 
-    // Get earliest date that has logs
-    final sortedDates = dailyLogs.keys.toList()..sort();
-    final earliestLogDate = DateTime(
-      sortedDates.first.year,
-      sortedDates.first.month,
-      sortedDates.first.day,
-    );
-
     final today = DateTime.now();
-    final todayDate = DateTime(today.year, today.month, today.day);
+    DateTime checkDate = DateTime(today.year, today.month, today.day);
 
     int streak = 0;
-    DateTime checkDate = todayDate;
 
     while (true) {
-      // 🛑 STOP: Don't go before the user's first log date
-      if (checkDate.isBefore(earliestLogDate)) break;
+      if (!dailyLogs.containsKey(checkDate)) {
+        break;
+      }
 
-      final logsForDate = dailyLogs[checkDate] ?? [];
+      final logsForDate = dailyLogs[checkDate]!;
       final score = CalculateScore.calculate(logsForDate);
 
       if (CalculateScore.isStreakValid(score)) {
@@ -39,26 +34,22 @@ class CalculateStreak {
     return streak;
   }
 
-  /// Get all dates that had a valid streak (score >= 80)
-  static List<DateTime> getStreakDates(Map<DateTime, List<LogEntryEntity>> dailyLogs) {
+  static List<DateTime> getStreakDates(
+    Map<DateTime, List<LogEntryEntity>> dailyLogs,
+  ) {
     final validDates = <DateTime>[];
+
     if (dailyLogs.isEmpty) return validDates;
 
-    final sortedDates = dailyLogs.keys.toList()..sort();
-    final earliestLogDate = DateTime(
-      sortedDates.first.year,
-      sortedDates.first.month,
-      sortedDates.first.day,
-    );
-
     final today = DateTime.now();
-    final todayDate = DateTime(today.year, today.month, today.day);
-    DateTime checkDate = todayDate;
+    DateTime checkDate = DateTime(today.year, today.month, today.day);
 
     while (true) {
-      if (checkDate.isBefore(earliestLogDate)) break;
+      if (!dailyLogs.containsKey(checkDate)) {
+        break;
+      }
 
-      final logs = dailyLogs[checkDate] ?? [];
+      final logs = dailyLogs[checkDate]!;
       final score = CalculateScore.calculate(logs);
 
       if (CalculateScore.isStreakValid(score)) {
@@ -72,8 +63,17 @@ class CalculateStreak {
     return validDates;
   }
 
-  static bool wasPerfectDay(DateTime date, Map<DateTime, List<LogEntryEntity>> dailyLogs) {
-    final logs = dailyLogs[DateTime(date.year, date.month, date.day)] ?? [];
+  static bool wasPerfectDay(
+    DateTime date,
+    Map<DateTime, List<LogEntryEntity>> dailyLogs,
+  ) {
+    final dateOnly = DateTime(date.year, date.month, date.day);
+
+    if (!dailyLogs.containsKey(dateOnly)) {
+      return false;
+    }
+
+    final logs = dailyLogs[dateOnly]!;
     return CalculateScore.isPerfectDay(CalculateScore.calculate(logs));
   }
 }

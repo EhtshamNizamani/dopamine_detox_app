@@ -1,88 +1,133 @@
 import 'package:dartz/dartz.dart';
 import 'package:dopamine_detox_app/core/constants/app_constants.dart';
-import 'package:dopamine_detox_app/features/activity_log/domain/entities/log_entry_entity.dart';
 import 'package:dopamine_detox_app/features/activity_log/domain/usecases/calculate_score.dart';
 import '../../domain/repositories/gamification_repository.dart';
+import 'package:dopamine_detox_app/features/activity_log/domain/repositories/log_repository.dart';
+
 
 class CheckAndUpdateStreakUseCase {
   final GamificationRepository gamificationRepository;
+  final LogRepository logRepository;
 
-  CheckAndUpdateStreakUseCase(this.gamificationRepository);
+  CheckAndUpdateStreakUseCase(
+    this.gamificationRepository,
+    this.logRepository,
+  );
 
-  /// Idempotent: Ek din mein sirf ek baar XP award hoga.
-  Future<Either<String, StreakUpdateResult>> call(List<LogEntryEntity> todayLogs) async {
+  DateTime _dateOnly(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
+
+  /// Finalizes the previous completed day.
+  ///
+  /// Important:
+  /// - Today is still in progress, so it should not award streak/XP.
+  /// - Yesterday is completed, so it can be finalized safely.
+  /// - First run does not award fake streak.
+  /// - Missed multiple days reset streak before checking yesterday.
+  Future<Either<String, StreakUpdateResult>> call() async {
     try {
-            if (todayLogs.isEmpty) {
-        final currentStreakResult = await gamificationRepository.getCurrentStreak();
-        final currentStreak = currentStreakResult.fold((l) => 0, (r) => r);
-        return Right(StreakUpdateResult(
-          newStreak: currentStreak,
-          xpAwarded: 0,
-          wasPerfectDay: false,
-          todayScore: AppConstants.maxDopamineScore,
-        ));
-      }
-
-      final score = CalculateScore.calculate(todayLogs);
-      final isValid = CalculateScore.isStreakValid(score);
-      final isPerfect = CalculateScore.isPerfectDay(score);
-
-      // ── Guard: Aaj already check ho chuka hai? ──
-      final gamificationResult = await gamificationRepository.getGamification();
-      final lastCheckDate = gamificationResult.fold(
-        (l) => null,
-        (r) => r.lastStreakCheckDate,
-      );
-
       final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
+      final today = _dateOnly(now);
+      final yesterday = today.subtract(const Duration(days: 1));
 
-      if (lastCheckDate != null) {
-        final lastCheck = DateTime(lastCheckDate.year, lastCheckDate.month, lastCheckDate.day);
-        if (lastCheck == today) {
-          // Pehle hi process kiya hai aaj → kuch mat karo
-          final currentStreakResult = await gamificationRepository.getCurrentStreak();
-          final currentStreak = currentStreakResult.fold((l) => 0, (r) => r);
-          return Right(StreakUpdateResult(
-            newStreak: currentStreak,
-            xpAwarded: 0,
-            wasPerfectDay: isPerfect,
-            todayScore: score,
-          ));
-        }
-      }
+      final gamificationResult = await gamificationRepository.getGamification();
 
-      // ── First time today ──
-      final currentStreakResult = await gamificationRepository.getCurrentStreak();
-      final currentStreak = currentStreakResult.fold((l) => 0, (r) => r);
+      return await gamificationResult.fold(
+        (error) async => Left(error),
+        (gamification) async {
+          int currentStreak = gamification.currentStreak;
+          final lastCheckDate = gamification.lastStreakCheckDate == null
+              ? null
+              : _dateOnly(gamification.lastStreakCheckDate!);
 
-      int newStreak;
-      int xpAwarded = 0;
+          // First run:
+          // Do not reward yesterday because we don't know if user was active.
+          // Mark yesterday as checked so tomorrow can process today properly.
+          if (lastCheckDate == null) {
+            await gamificationRepository.updateStreak(
+              currentStreak,
+              checkDate: yesterday,
+            );
 
-      if (isValid) {
-        newStreak = currentStreak + 1;
-        xpAwarded += AppConstants.xpGoodDay;
-        if (isPerfect) {
-          xpAwarded += (AppConstants.xpPerfectDay - AppConstants.xpGoodDay);
-        }
-        if (currentStreak > 0) {
-          xpAwarded += AppConstants.xpStreakMaintain;
-        }
-      } else {
-        newStreak = 0;
-      }
+            return Right(
+              StreakUpdateResult(
+                newStreak: currentStreak,
+                xpAwarded: 0,
+                wasPerfectDay: false,
+                todayScore: AppConstants.maxDopamineScore,
+              ),
+            );
+          }
 
-      await gamificationRepository.updateStreak(newStreak);
-      if (xpAwarded > 0) {
-        await gamificationRepository.addXP(xpAwarded);
-      }
+          // Already processed yesterday or newer.
+          if (!lastCheckDate.isBefore(yesterday)) {
+            return Right(
+              StreakUpdateResult(
+                newStreak: currentStreak,
+                xpAwarded: 0,
+                wasPerfectDay: false,
+                todayScore: AppConstants.maxDopamineScore,
+              ),
+            );
+          }
 
-      return Right(StreakUpdateResult(
-        newStreak: newStreak,
-        xpAwarded: xpAwarded,
-        wasPerfectDay: isPerfect,
-        todayScore: score,
-      ));
+          // If user missed more than one completed day, do not create fake streak.
+          // Reset first, then only process yesterday.
+          final missedDays = yesterday.difference(lastCheckDate).inDays;
+          if (missedDays > 1) {
+            currentStreak = 0;
+          }
+
+          final logsResult = await logRepository.getLogsForDate(yesterday);
+
+          return await logsResult.fold(
+            (error) async => Left(error),
+            (yesterdayLogs) async {
+              final score = CalculateScore.calculate(yesterdayLogs);
+              final isValid = CalculateScore.isStreakValid(score);
+              final isPerfect = CalculateScore.isPerfectDay(score);
+
+              int newStreak = currentStreak;
+              int xpAwarded = 0;
+
+              if (isValid) {
+                newStreak = currentStreak + 1;
+
+                if (isPerfect) {
+                  xpAwarded += AppConstants.xpPerfectDay;
+                } else {
+                  xpAwarded += AppConstants.xpGoodDay;
+                }
+
+                if (currentStreak > 0) {
+                  xpAwarded += AppConstants.xpStreakMaintain;
+                }
+              } else {
+                newStreak = 0;
+              }
+
+              await gamificationRepository.updateStreak(
+                newStreak,
+                checkDate: yesterday,
+              );
+
+              if (xpAwarded > 0) {
+                await gamificationRepository.addXP(xpAwarded);
+              }
+
+              return Right(
+                StreakUpdateResult(
+                  newStreak: newStreak,
+                  xpAwarded: xpAwarded,
+                  wasPerfectDay: isPerfect,
+                  todayScore: score,
+                ),
+              );
+            },
+          );
+        },
+      );
     } catch (e) {
       return Left(e.toString());
     }
@@ -93,6 +138,9 @@ class StreakUpdateResult {
   final int newStreak;
   final int xpAwarded;
   final bool wasPerfectDay;
+
+  /// This is the finalized previous day score.
+  /// Keeping name todayScore to avoid changing too many files now.
   final int todayScore;
 
   StreakUpdateResult({

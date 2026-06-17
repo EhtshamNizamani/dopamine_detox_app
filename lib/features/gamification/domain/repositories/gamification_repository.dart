@@ -16,8 +16,10 @@ abstract class GamificationRepository {
     required int totalLogsCount,
   });
   
-  Future<Either<String, void>> updateStreak(int newStreak);
-  Future<Either<String, int>> getCurrentStreak();
+Future<Either<String, void>> updateStreak(
+  int newStreak, {
+  DateTime? checkDate,
+});  Future<Either<String, int>> getCurrentStreak();
   
   /// Check if daily open XP should be awarded
   /// Returns true if XP was awarded, false if already claimed today

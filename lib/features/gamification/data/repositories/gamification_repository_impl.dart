@@ -109,7 +109,7 @@ class GamificationRepositoryImpl implements GamificationRepository {
 
       // Perfect Day badge
       if (todayScore == 100 &&
-          totalLogsCount > 0 && // ← YE CONDITION ADD KARO
+          currentStreak > 0 &&
           !badges.contains(AppConstants.badgePerfectDay)) {
         await dataSource.addBadge(AppConstants.badgePerfectDay);
         newlyUnlocked.add(AppConstants.badgePerfectDay);
@@ -122,10 +122,13 @@ class GamificationRepositoryImpl implements GamificationRepository {
   }
 
   @override
-  Future<Either<String, void>> updateStreak(int newStreak) async {
+  Future<Either<String, void>> updateStreak(
+    int newStreak, {
+    DateTime? checkDate,
+  }) async {
     try {
       await dataSource.setCurrentStreak(newStreak);
-      await dataSource.setLastStreakCheckDate(DateTime.now());
+      await dataSource.setLastStreakCheckDate(checkDate ?? DateTime.now());
       return const Right(null);
     } catch (e) {
       return Left(e.toString());
