@@ -128,6 +128,7 @@ void _showXPAwarded(int xp) {
           }
 
           return RefreshIndicator(
+            color: Colors.teal,
             onRefresh: _onRefresh,
             child: ListView(
               padding: const EdgeInsets.all(16),
